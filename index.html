@@ -896,6 +896,7 @@ footer span { color: var(--acid); }
   .stat-value { font-size: 22px; }
   .section-title { font-size: clamp(28px, 7vw, 56px); }
   .container, .container-wide { padding: 0 16px; }
+  .container-wide > .container { padding: 0; }
   .glass { padding: 20px 16px; }
   .chart-wrap { padding: 16px 10px; }
   canvas { max-height: 200px; }
@@ -1251,10 +1252,12 @@ footer span { color: var(--acid); }
 <!-- RESULTS SECTION -->
 <section id="results-section" class="hidden">
   <div class="container-wide">
-    <div class="section-label">// ANALYSIS COMPLETE</div>
-    <h2 class="section-title" style="max-width:900px;margin-left:auto;margin-right:auto">YOUR CAFFEINE<br><span style="color:var(--acid)">INTELLIGENCE</span></h2>
+    <div class="container">
+      <div class="section-label">// ANALYSIS COMPLETE</div>
+      <h2 class="section-title">YOUR CAFFEINE<br><span style="color:var(--acid)">INTELLIGENCE</span></h2>
+    </div>
 
-    <div id="loading-bar-wrap">
+    <div id="loading-bar-wrap" style="max-width:900px;margin:0 auto">
       <div class="loading-bar"></div>
     </div>
 
