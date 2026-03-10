@@ -1,0 +1,2057 @@
+  <!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'none'; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none';">
+<meta http-equiv="X-Content-Type-Options" content="nosniff">
+<meta http-equiv="Referrer-Policy" content="no-referrer">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#030303">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>BUZZZ — Know Your Bloodstream</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"
+  crossorigin="anonymous"
+  referrerpolicy="no-referrer"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&family=Bebas+Neue&family=Archivo+Black&family=VT323&display=swap" rel="stylesheet">
+<style>
+:root {
+  --acid: #b8ff00;
+  --acid2: #00ffb3;
+  --hot: #ff2d6b;
+  --orange: #ff6b00;
+  --bg: #030303;
+  --bg2: #0a0a0a;
+  --glass: rgba(255,255,255,0.04);
+  --border: rgba(184,255,0,0.2);
+  --text: #f0f0f0;
+  --muted: #666;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html {
+  scroll-behavior: smooth;
+  background: #030303;
+  min-height: 100%;
+}
+
+body {
+  background: #030303;
+  color: var(--text);
+  font-family: 'Space Mono', monospace;
+  overflow-x: hidden;
+  cursor: none;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* CUSTOM CURSOR */
+#cursor {
+  width: 12px; height: 12px;
+  background: var(--acid);
+  border-radius: 50%;
+  position: fixed; top: 0; left: 0;
+  pointer-events: none;
+  z-index: 99999;
+  mix-blend-mode: difference;
+  transition: transform 0.1s;
+  box-shadow: 0 0 20px var(--acid), 0 0 40px var(--acid);
+}
+#cursor-ring {
+  width: 36px; height: 36px;
+  border: 1.5px solid var(--acid);
+  border-radius: 50%;
+  position: fixed; top: 0; left: 0;
+  pointer-events: none;
+  z-index: 99998;
+  transition: all 0.15s ease-out;
+  opacity: 0.6;
+}
+
+/* SCANLINES OVERLAY */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 3px,
+    rgba(0,0,0,0.07) 3px,
+    rgba(0,0,0,0.07) 4px
+  );
+  pointer-events: none;
+  z-index: 9997;
+  animation: scanlines 8s linear infinite;
+}
+@keyframes scanlines {
+  0% { background-position: 0 0; }
+  100% { background-position: 0 100px; }
+}
+
+/* NOISE GRAIN */
+body::after {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.05'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 9996;
+  opacity: 0.12;
+}
+
+/* MARQUEE */
+.marquee-wrap {
+  overflow: hidden;
+  background: var(--acid);
+  padding: 10px 0;
+  position: sticky; top: 0; z-index: 1000;
+  border-bottom: 2px solid #000;
+}
+.marquee-inner {
+  display: flex; gap: 40px;
+  animation: marquee 18s linear infinite;
+  white-space: nowrap;
+}
+.marquee-inner span {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 18px; letter-spacing: 3px;
+  color: #000;
+  flex-shrink: 0;
+}
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+/* HERO */
+.hero {
+  min-height: 100vh;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center;
+  position: relative;
+  padding: 60px 20px;
+  overflow: hidden;
+  background: #030303;
+}
+
+section {
+  background: #030303;
+}
+
+.hero-bg-grid {
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(rgba(184,255,0,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(184,255,0,0.04) 1px, transparent 1px);
+  background-size: 60px 60px;
+  animation: grid-drift 20s linear infinite;
+}
+@keyframes grid-drift {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(60px); }
+}
+
+.hero-glow {
+  position: absolute; top: 20%; left: 50%;
+  transform: translate(-50%,-50%);
+  width: 600px; height: 600px;
+  background: radial-gradient(circle, rgba(184,255,0,0.08) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.logo-container { position: relative; z-index: 1; }
+
+.logo-eyebrow {
+  font-family: 'VT323', monospace;
+  font-size: clamp(14px,2vw,18px);
+  color: var(--acid);
+  letter-spacing: 8px;
+  text-transform: uppercase;
+  animation: flicker 4s infinite;
+  margin-bottom: 8px;
+}
+
+@keyframes flicker {
+  0%,95%,97%,100% { opacity: 1; }
+  96% { opacity: 0.1; }
+}
+
+.logo-main {
+  font-family: 'Black Ops One', sans-serif;
+  font-size: clamp(80px,18vw,200px);
+  line-height: 0.85;
+  color: var(--acid);
+  text-shadow:
+    4px 4px 0 #000,
+    -2px -2px 0 rgba(184,255,0,0.3),
+    0 0 80px rgba(184,255,0,0.4),
+    0 0 160px rgba(184,255,0,0.2);
+  position: relative;
+  animation: glitch-logo 6s infinite;
+  letter-spacing: -4px;
+}
+
+@keyframes glitch-logo {
+  0%,90%,100% { text-shadow: 4px 4px 0 #000, 0 0 80px rgba(184,255,0,0.4); clip-path: none; }
+  91% { text-shadow: -4px 0 var(--hot), 4px 4px 0 #000; clip-path: polygon(0 20%, 100% 20%, 100% 40%, 0 40%); transform: translate(-3px, 0); }
+  92% { text-shadow: 4px 0 var(--acid2), 4px 4px 0 #000; clip-path: polygon(0 60%, 100% 60%, 100% 80%, 0 80%); transform: translate(3px, 0); }
+  93% { clip-path: none; transform: translate(0,0); }
+}
+
+.logo-sub {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(16px,3vw,28px);
+  letter-spacing: 12px;
+  color: var(--muted);
+  margin-top: 12px;
+}
+
+.hero-tagline {
+  font-family: 'Space Mono', monospace;
+  font-size: clamp(12px,1.8vw,16px);
+  color: rgba(240,240,240,0.6);
+  margin-top: 24px;
+  font-style: italic;
+  max-width: 500px;
+}
+
+/* STEAM ANIMATION */
+.steam-cup {
+  position: relative; display: inline-block;
+  margin: 40px auto 0;
+  font-size: 80px;
+  filter: drop-shadow(0 0 30px rgba(184,255,0,0.3));
+  animation: cup-bob 3s ease-in-out infinite;
+}
+@keyframes cup-bob { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+
+.steam-particles {
+  position: absolute; top: -30px; left: 50%; transform: translateX(-50%);
+  display: flex; gap: 12px;
+}
+.steam {
+  width: 4px; height: 40px;
+  background: linear-gradient(to top, rgba(184,255,0,0.6), transparent);
+  border-radius: 4px;
+  animation: steam-rise 2s ease-in-out infinite;
+  filter: blur(2px);
+}
+.steam:nth-child(2) { animation-delay: 0.3s; height: 30px; }
+.steam:nth-child(3) { animation-delay: 0.6s; }
+@keyframes steam-rise {
+  0% { transform: translateY(0) scaleX(1); opacity: 0; }
+  50% { opacity: 1; transform: translateY(-20px) scaleX(1.5); }
+  100% { transform: translateY(-50px) scaleX(0.5); opacity: 0; }
+}
+
+.scroll-hint {
+  position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
+  font-family: 'VT323', monospace;
+  color: var(--acid);
+  font-size: 16px;
+  letter-spacing: 4px;
+  animation: bounce 2s infinite;
+}
+@keyframes bounce { 0%,100%{transform:translateX(-50%) translateY(0)} 50%{transform:translateX(-50%) translateY(8px)} }
+
+/* SECTION STYLES */
+section { padding: 80px 20px; background: #030303; }
+
+.section-label {
+  font-family: 'VT323', monospace;
+  font-size: 14px;
+  letter-spacing: 6px;
+  color: var(--acid);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  opacity: 0.8;
+}
+
+.section-title {
+  font-family: 'Black Ops One', sans-serif;
+  font-size: clamp(36px,6vw,72px);
+  line-height: 0.9;
+  margin-bottom: 40px;
+}
+
+.container { max-width: 900px; margin: 0 auto; }
+.container-wide { max-width: 1100px; margin: 0 auto; }
+
+/* GLASS CARD */
+.glass {
+  background: var(--glass);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  backdrop-filter: blur(20px);
+  padding: 28px;
+  position: relative;
+  overflow: hidden;
+}
+.glass::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(184,255,0,0.4), transparent);
+}
+
+/* FORM INPUTS */
+.input-group {
+  display: flex; flex-direction: column; gap: 6px;
+  margin-bottom: 20px;
+}
+
+label {
+  font-family: 'VT323', monospace;
+  font-size: 15px;
+  letter-spacing: 3px;
+  color: var(--acid);
+  text-transform: uppercase;
+}
+
+input, select {
+  background: rgba(0,0,0,0.6);
+  border: 1px solid rgba(184,255,0,0.25);
+  border-radius: 8px;
+  color: var(--text);
+  font-family: 'Space Mono', monospace;
+  font-size: 15px;
+  padding: 14px 16px;
+  outline: none;
+  transition: all 0.2s;
+  width: 100%;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+input:focus, select:focus {
+  border-color: var(--acid);
+  box-shadow: 0 0 0 3px rgba(184,255,0,0.1), inset 0 0 20px rgba(184,255,0,0.02);
+}
+
+input::placeholder { color: var(--muted); font-size: 13px; }
+
+select option { background: #111; color: var(--text); }
+
+/* GRID LAYOUTS */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+
+@media (max-width: 600px) {
+  .grid-2, .grid-3 { grid-template-columns: 1fr; }
+}
+
+/* BUTTONS */
+.btn {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 18px;
+  letter-spacing: 3px;
+  padding: 14px 32px;
+  border: none;
+  border-radius: 8px;
+  cursor: none;
+  transition: all 0.15s;
+  position: relative;
+  overflow: hidden;
+  display: inline-flex; align-items: center; gap: 8px;
+}
+
+.btn::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: rgba(255,255,255,0.1);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.btn:hover::after { opacity: 1; }
+.btn:active { transform: scale(0.97); }
+
+.btn-primary {
+  background: var(--acid);
+  color: #000;
+  box-shadow: 0 0 30px rgba(184,255,0,0.3);
+}
+.btn-primary:hover {
+  box-shadow: 0 0 50px rgba(184,255,0,0.5);
+  transform: translateY(-2px);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--acid);
+  border: 1px solid var(--acid);
+}
+.btn-ghost:hover {
+  background: rgba(184,255,0,0.08);
+  transform: translateY(-2px);
+}
+
+.btn-hot {
+  background: var(--hot);
+  color: #fff;
+  box-shadow: 0 0 30px rgba(255,45,107,0.3);
+}
+.btn-hot:hover {
+  box-shadow: 0 0 50px rgba(255,45,107,0.5);
+  transform: translateY(-2px);
+}
+
+/* COFFEE ENTRY */
+.coffee-entry {
+  background: rgba(0,0,0,0.4);
+  border: 1px solid rgba(184,255,0,0.15);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 16px;
+  position: relative;
+  animation: entry-pop 0.3s cubic-bezier(0.34,1.56,0.64,1);
+}
+@keyframes entry-pop {
+  0% { transform: scale(0.9) translateY(10px); opacity: 0; }
+  100% { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+.entry-number {
+  font-family: 'Black Ops One', sans-serif;
+  font-size: 11px;
+  letter-spacing: 3px;
+  color: var(--acid);
+  margin-bottom: 12px;
+  opacity: 0.7;
+}
+
+.delete-btn {
+  position: absolute; top: 14px; right: 14px;
+  background: rgba(255,45,107,0.15);
+  border: 1px solid rgba(255,45,107,0.3);
+  color: var(--hot);
+  width: 28px; height: 28px;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: none;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s;
+}
+.delete-btn:hover { background: var(--hot); color: #fff; }
+
+/* BMR DISPLAY */
+.bmr-display {
+  background: linear-gradient(135deg, rgba(184,255,0,0.08), rgba(0,255,179,0.04));
+  border: 1px solid rgba(184,255,0,0.3);
+  border-radius: 16px;
+  padding: 28px;
+  text-align: center;
+  margin-top: 24px;
+  animation: entry-pop 0.4s ease;
+}
+.bmr-number {
+  font-family: 'Black Ops One', sans-serif;
+  font-size: clamp(48px,8vw,80px);
+  color: var(--acid);
+  line-height: 1;
+  text-shadow: 0 0 40px rgba(184,255,0,0.4);
+  animation: count-up 1s ease-out;
+}
+@keyframes count-up { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
+.bmr-label { font-family: 'VT323', monospace; font-size: 16px; letter-spacing: 4px; color: var(--muted); margin-top: 4px; }
+.bmr-tagline { font-family: 'Space Mono', monospace; font-size: 12px; font-style: italic; color: rgba(240,240,240,0.5); margin-top: 12px; }
+
+/* RESULTS */
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.stat-card {
+  background: var(--glass);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 20px 16px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.2s, border-color 0.2s;
+}
+.stat-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(184,255,0,0.5);
+}
+.stat-card::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--acid), transparent);
+  opacity: 0.5;
+}
+
+.stat-value {
+  font-family: 'Black Ops One', sans-serif;
+  font-size: clamp(24px,4vw,40px);
+  color: var(--acid);
+  line-height: 1;
+}
+.stat-unit { font-size: 14px; color: var(--muted); font-family: 'Space Mono', monospace; }
+.stat-label {
+  font-family: 'VT323', monospace;
+  font-size: 13px;
+  letter-spacing: 3px;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-top: 6px;
+}
+
+/* CHART WRAPPER */
+.chart-wrap {
+  background: rgba(0,0,0,0.5);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 24px;
+  margin: 24px 0;
+  position: relative;
+}
+
+/* SLEEP INDICATOR */
+.sleep-indicator {
+  border-radius: 16px;
+  padding: 24px;
+  text-align: center;
+  font-family: 'Black Ops One', sans-serif;
+  font-size: clamp(20px,3vw,28px);
+  letter-spacing: 1px;
+  margin: 16px 0;
+  animation: entry-pop 0.5s ease;
+  position: relative;
+  overflow: hidden;
+}
+.sleep-bad {
+  background: linear-gradient(135deg, rgba(255,45,107,0.15), rgba(255,107,0,0.1));
+  border: 1px solid rgba(255,45,107,0.4);
+  color: var(--hot);
+  box-shadow: 0 0 40px rgba(255,45,107,0.1);
+}
+.sleep-good {
+  background: linear-gradient(135deg, rgba(184,255,0,0.1), rgba(0,255,179,0.05));
+  border: 1px solid rgba(184,255,0,0.3);
+  color: var(--acid);
+}
+.sleep-indicator .sub {
+  font-family: 'Space Mono', monospace;
+  font-size: 12px;
+  font-style: italic;
+  opacity: 0.7;
+  margin-top: 6px;
+  font-weight: normal;
+}
+
+/* BUZZ SCORE */
+.buzz-section {
+  text-align: center;
+  margin: 32px 0;
+}
+
+.buzz-score-ring {
+  position: relative;
+  display: inline-block;
+  margin: 20px;
+}
+
+.buzz-score-ring svg {
+  transform: rotate(-90deg);
+}
+
+.buzz-number {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  font-family: 'Black Ops One', sans-serif;
+}
+.buzz-num { font-size: 52px; color: var(--acid); line-height: 1; }
+.buzz-lbl { font-family: 'VT323', monospace; font-size: 14px; letter-spacing: 3px; color: var(--muted); }
+
+/* PERSONALITY CARD */
+.personality-card {
+  background: linear-gradient(135deg, rgba(184,255,0,0.06), rgba(0,255,179,0.03));
+  border: 1px solid rgba(184,255,0,0.25);
+  border-radius: 20px;
+  padding: 32px;
+  text-align: center;
+  margin: 20px 0;
+  position: relative;
+  overflow: hidden;
+}
+.personality-card::before {
+  content: attr(data-emoji);
+  position: absolute;
+  font-size: 120px;
+  opacity: 0.06;
+  top: -20px; right: -10px;
+  pointer-events: none;
+  filter: blur(2px);
+}
+.personality-label {
+  font-family: 'VT323', monospace;
+  font-size: 13px;
+  letter-spacing: 5px;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.personality-name {
+  font-family: 'Black Ops One', sans-serif;
+  font-size: clamp(28px,5vw,52px);
+  color: var(--acid);
+  line-height: 1;
+  text-shadow: 0 0 30px rgba(184,255,0,0.3);
+}
+.personality-desc {
+  font-family: 'Space Mono', monospace;
+  font-size: 13px;
+  font-style: italic;
+  color: rgba(240,240,240,0.55);
+  margin-top: 12px;
+  max-width: 400px;
+  margin-left: auto; margin-right: auto;
+}
+
+/* SHARE CARD */
+.share-card {
+  background: linear-gradient(135deg, #0a0a0a, #111);
+  border: 2px solid var(--acid);
+  border-radius: 20px;
+  padding: 32px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 0 60px rgba(184,255,0,0.1);
+}
+.share-card::before {
+  content: 'BUZZZ';
+  font-family: 'Black Ops One', sans-serif;
+  font-size: 120px;
+  position: absolute;
+  top: -20px; left: -10px;
+  color: rgba(184,255,0,0.04);
+  pointer-events: none;
+  letter-spacing: -5px;
+}
+.share-card-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 13px;
+  letter-spacing: 6px;
+  color: var(--acid);
+  margin-bottom: 20px;
+  opacity: 0.7;
+}
+.share-stat {
+  display: inline-block;
+  background: rgba(184,255,0,0.08);
+  border: 1px solid rgba(184,255,0,0.2);
+  border-radius: 10px;
+  padding: 10px 20px;
+  margin: 6px;
+}
+.share-stat-val {
+  font-family: 'Black Ops One', sans-serif;
+  font-size: 28px;
+  color: var(--acid);
+}
+.share-stat-lbl {
+  font-family: 'VT323', monospace;
+  font-size: 12px;
+  letter-spacing: 3px;
+  color: var(--muted);
+  display: block;
+}
+
+/* SLIDER */
+.slider-wrap { margin: 16px 0; }
+.slider-label-row {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 8px;
+}
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 4px;
+  background: rgba(184,255,0,0.2);
+  border-radius: 4px;
+  border: none;
+  padding: 0;
+  outline: none;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 20px; height: 20px;
+  background: var(--acid);
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 0 10px rgba(184,255,0,0.5);
+}
+
+/* HALFLIFE VALUE */
+.halflife-val {
+  font-family: 'Black Ops One', sans-serif;
+  font-size: 22px;
+  color: var(--acid);
+}
+
+/* SUBMIT ROW */
+.submit-row {
+  display: flex; gap: 12px; flex-wrap: wrap;
+  margin-top: 28px;
+}
+
+/* HIDDEN/VISIBLE */
+.hidden { display: none !important; }
+
+/* LOADING */
+.loading-bar {
+  height: 3px;
+  background: linear-gradient(90deg, var(--acid), var(--acid2), var(--acid));
+  background-size: 200% 100%;
+  animation: loading-move 1.2s linear infinite;
+  border-radius: 3px;
+  margin: 16px 0;
+}
+@keyframes loading-move {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* TIMELINE */
+.timeline-wrap {
+  max-height: 280px;
+  overflow-y: auto;
+  margin: 16px 0;
+  scrollbar-width: thin;
+  scrollbar-color: var(--acid) transparent;
+}
+.timeline-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  font-family: 'Space Mono', monospace;
+  font-size: 12px;
+}
+.timeline-hour {
+  color: var(--muted); min-width: 50px;
+}
+.timeline-bar-wrap {
+  flex: 1; height: 8px;
+  background: rgba(255,255,255,0.05);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.timeline-bar {
+  height: 100%; border-radius: 4px;
+  transition: width 0.5s ease;
+}
+.timeline-val {
+  min-width: 65px; text-align: right;
+  color: var(--text);
+}
+
+/* STICKER ELEMENTS */
+.sticker {
+  position: absolute;
+  font-family: 'Black Ops One', sans-serif;
+  font-size: 11px;
+  letter-spacing: 2px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  transform: rotate(-8deg);
+  pointer-events: none;
+  z-index: 2;
+}
+.sticker-hot {
+  background: var(--hot);
+  color: #fff;
+  transform: rotate(6deg);
+}
+.sticker-acid {
+  background: var(--acid);
+  color: #000;
+  transform: rotate(-4deg);
+}
+
+/* ACCENT LINE */
+.accent-line {
+  height: 2px;
+  background: linear-gradient(90deg, var(--acid), transparent);
+  margin: 40px 0;
+}
+
+/* COPY BTN */
+.copy-feedback {
+  font-family: 'VT323', monospace;
+  font-size: 14px;
+  letter-spacing: 3px;
+  color: var(--acid);
+  margin-top: 8px;
+  text-align: center;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.copy-feedback.show { opacity: 1; }
+
+/* FOOTER */
+footer {
+  text-align: center;
+  padding: 40px 20px;
+  border-top: 1px solid rgba(184,255,0,0.1);
+  font-family: 'VT323', monospace;
+  font-size: 14px;
+  letter-spacing: 3px;
+  color: var(--muted);
+}
+footer span { color: var(--acid); }
+
+/* DISCLAIMER FIXED */
+.disclaimer-fixed {
+  position: fixed;
+  top: 52px; right: 16px;
+  z-index: 9990;
+}
+.disclaimer-icon-btn {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  border: 1px solid rgba(184,255,0,0.4);
+  background: rgba(10,10,10,0.9);
+  color: rgba(184,255,0,0.6);
+  font-family: Georgia, serif;
+  font-style: italic;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer !important;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s;
+  backdrop-filter: blur(10px);
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.disclaimer-icon-btn:hover {
+  border-color: rgba(184,255,0,0.8);
+  color: var(--acid);
+  box-shadow: 0 0 12px rgba(184,255,0,0.25);
+}
+.disclaimer-tooltip {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  width: min(260px, 80vw);
+  background: rgba(10,10,10,0.98);
+  border: 1px solid rgba(184,255,0,0.25);
+  border-radius: 10px;
+  padding: 14px;
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  line-height: 1.65;
+  color: rgba(240,240,240,0.6);
+  text-align: left;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.2s, transform 0.2s, visibility 0.2s;
+  transform: translateY(-6px);
+  backdrop-filter: blur(20px);
+  box-shadow: 0 8px 40px rgba(0,0,0,0.8);
+  z-index: 9991;
+}
+.disclaimer-tooltip.visible {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+@media (hover: hover) {
+  .disclaimer-fixed:hover .disclaimer-tooltip {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: translateY(0);
+  }
+}
+
+/* BLINKING CURSOR */
+.blink {
+  animation: blink-cursor 1s step-end infinite;
+}
+@keyframes blink-cursor { 0%,100%{opacity:1} 50%{opacity:0} }
+
+/* ========= RESPONSIVE — COMPREHENSIVE ========= */
+
+/* Tablet (≤768px) */
+@media (max-width: 768px) {
+  .grid-2, .grid-3 { grid-template-columns: 1fr 1fr; gap: 12px; }
+  .stat-grid { grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .stat-card { padding: 14px 10px; }
+  .stat-value { font-size: 22px; }
+  .section-title { font-size: clamp(28px, 7vw, 56px); }
+  .container, .container-wide { padding: 0 16px; }
+  .glass { padding: 20px 16px; }
+  .chart-wrap { padding: 16px 10px; }
+  canvas { max-height: 200px; }
+}
+
+/* Large phone (≤600px) */
+@media (max-width: 600px) {
+  /* Hide desktop cursor on touch */
+  #cursor, #cursor-ring { display: none; }
+  body { cursor: auto; }
+  .btn { cursor: pointer; }
+  .delete-btn { cursor: pointer; }
+  .disclaimer-icon-btn { cursor: pointer; }
+  input, select { cursor: auto; }
+
+  .mobile-sticky { display: flex; gap: 10px; align-items: center; }
+  .mobile-sticky .btn { flex: 1; text-align: center; justify-content: center; font-size: 14px; padding: 13px 8px; letter-spacing: 2px; }
+  body { padding-bottom: 74px; }
+
+  .grid-2 { grid-template-columns: 1fr; }
+  .grid-3 { grid-template-columns: 1fr; }
+
+  .stat-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .stat-card { padding: 14px 10px; }
+  .stat-value { font-size: 20px; }
+
+  section { padding: 48px 16px; }
+  .hero { padding: 70px 16px 80px; }
+
+  .submit-row { flex-direction: column; }
+  .submit-row .btn { width: 100%; justify-content: center; }
+
+  .btn { font-size: 15px; padding: 13px 20px; letter-spacing: 2px; }
+
+  input, select { font-size: 16px; padding: 13px 14px; } /* 16px prevents iOS zoom */
+
+  .coffee-entry { padding: 16px 14px; }
+
+  .chart-wrap { padding: 14px 8px; }
+  canvas { max-height: 180px; }
+
+  .timeline-wrap { max-height: 220px; }
+  .timeline-row { gap: 8px; font-size: 11px; }
+  .timeline-hour { min-width: 44px; font-size: 11px; }
+  .timeline-val { min-width: 52px; font-size: 11px; }
+
+  .sleep-indicator { font-size: clamp(16px, 4vw, 22px); padding: 18px 16px; }
+
+  /* Buzz + personality stack vertically */
+  .grid-2.results-grid { grid-template-columns: 1fr; }
+
+  .buzz-score-ring svg { width: 130px; height: 130px; }
+  .buzz-num { font-size: 40px; }
+
+  .personality-card { padding: 20px 16px; }
+  .personality-name { font-size: clamp(22px, 6vw, 36px); }
+
+  .disclaimer-fixed { top: 48px; right: 12px; }
+
+  .marquee-inner span { font-size: 14px; letter-spacing: 2px; }
+
+  .bmr-display { padding: 20px 16px; }
+  .bmr-number { font-size: clamp(40px, 12vw, 64px); }
+
+  .data-row { font-size: 11px; flex-wrap: wrap; gap: 4px; }
+  .data-val { text-align: right; }
+}
+
+/* Small phone (≤390px — iPhone SE, Galaxy A series) */
+@media (max-width: 390px) {
+  .logo-main { font-size: clamp(70px, 22vw, 110px); letter-spacing: -2px; }
+  .logo-sub { font-size: 13px; letter-spacing: 6px; }
+
+  .stat-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .stat-card { padding: 12px 8px; }
+  .stat-value { font-size: 18px; }
+  .stat-label { font-size: 10px; letter-spacing: 1px; }
+
+  .section-title { font-size: clamp(26px, 9vw, 44px); }
+  section { padding: 40px 14px; }
+  .glass { padding: 16px 12px; }
+
+  .timeline-hour { min-width: 38px; }
+  .timeline-val { min-width: 46px; }
+
+  canvas { max-height: 160px; }
+
+  .buzz-score-ring svg { width: 110px; height: 110px; }
+  .buzz-num { font-size: 34px; }
+  .buzz-lbl { font-size: 11px; }
+
+  .entry-number { font-size: 10px; }
+  .dose-badge { font-size: 12px; padding: 5px 10px; }
+}
+
+/* Very small (≤320px — Galaxy Fold outer, older phones) */
+@media (max-width: 320px) {
+  .logo-main { font-size: 64px; }
+  section { padding: 32px 12px; }
+  .glass { padding: 14px 10px; }
+  .btn { font-size: 13px; padding: 11px 14px; letter-spacing: 1px; }
+  input, select { font-size: 15px; padding: 11px 12px; }
+  .stat-grid { grid-template-columns: 1fr 1fr; gap: 6px; }
+  .stat-value { font-size: 16px; }
+  canvas { max-height: 140px; }
+  .timeline-row { font-size: 10px; gap: 6px; }
+  .timeline-hour { min-width: 34px; }
+  .timeline-val { min-width: 40px; }
+}
+
+/* Landscape mobile */
+@media (max-height: 500px) and (orientation: landscape) {
+  .hero { min-height: auto; padding: 60px 20px 40px; }
+  .steam-cup { font-size: 50px; margin-top: 16px; }
+  .scroll-hint { display: none; }
+  body { padding-bottom: 60px; }
+}
+
+/* MOBILE STICKY */
+.mobile-sticky {
+  display: none;
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: rgba(3,3,3,0.97);
+  border-top: 1px solid rgba(184,255,0,0.4);
+  padding: 10px 16px;
+  z-index: 500;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  safe-area-inset-bottom: env(safe-area-inset-bottom);
+  padding-bottom: calc(10px + env(safe-area-inset-bottom));
+}
+@keyframes jitter {
+  0%,100%{transform:translate(0,0) rotate(0)}
+  25%{transform:translate(-2px,1px) rotate(-0.5deg)}
+  50%{transform:translate(2px,-1px) rotate(0.5deg)}
+  75%{transform:translate(-1px,2px) rotate(-0.3deg)}
+}
+.jitter:hover { animation: jitter 0.3s ease infinite; }
+
+/* Touch devices — disable hover-only effects */
+@media (hover: none) {
+  .jitter:hover { animation: none; }
+  .btn:hover { transform: none; }
+  .btn-primary:hover { box-shadow: 0 0 30px rgba(184,255,0,0.3); }
+  .stat-card:hover { transform: none; border-color: var(--border); }
+}
+
+/* ACTIVE TAB STYLE for section highlight */
+#results-section { scroll-margin-top: 50px; }
+
+/* GLITCH TEXT */
+.glitch-text {
+  position: relative; display: inline-block;
+}
+.glitch-text::before, .glitch-text::after {
+  content: attr(data-text);
+  position: absolute; top: 0; left: 0;
+  width: 100%; height: 100%;
+}
+.glitch-text::before {
+  color: var(--hot);
+  animation: glitch-1 4s infinite;
+  clip-path: polygon(0 20%, 100% 20%, 100% 40%, 0 40%);
+}
+.glitch-text::after {
+  color: var(--acid2);
+  animation: glitch-2 4s infinite;
+  clip-path: polygon(0 65%, 100% 65%, 100% 75%, 0 75%);
+}
+@keyframes glitch-1 {
+  0%,90%,100%{transform:translate(0)} 91%{transform:translate(-3px,0)} 92%{transform:translate(3px,0)} 93%{transform:translate(0)}
+}
+@keyframes glitch-2 {
+  0%,90%,100%{transform:translate(0)} 91%{transform:translate(3px,0)} 92%{transform:translate(-3px,0)} 93%{transform:translate(0)}
+}
+
+.tag {
+  display: inline-block;
+  background: rgba(184,255,0,0.1);
+  border: 1px solid rgba(184,255,0,0.25);
+  border-radius: 6px;
+  font-family: 'VT323', monospace;
+  font-size: 13px;
+  letter-spacing: 2px;
+  color: var(--acid);
+  padding: 3px 10px;
+  margin: 2px;
+}
+
+/* HALF LIFE INFO */
+.halflife-info {
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  color: var(--muted);
+  font-style: italic;
+  margin-top: 4px;
+}
+
+/* SELECTED DOSE DISPLAY */
+.dose-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: rgba(184,255,0,0.1);
+  border: 1px solid rgba(184,255,0,0.3);
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-family: 'Black Ops One', sans-serif;
+  font-size: 14px;
+  color: var(--acid);
+  margin-top: 8px;
+}
+
+/* DATA ROWS */
+.data-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  font-family: 'Space Mono', monospace;
+  font-size: 13px;
+}
+.data-row:last-child { border-bottom: none; }
+.data-key { color: var(--muted); }
+.data-val { color: var(--text); font-weight: bold; }
+.data-val.acid { color: var(--acid); }
+</style>
+</head>
+<body>
+
+<div id="cursor"></div>
+<div id="cursor-ring"></div>
+
+<!-- MARQUEE -->
+<div class="marquee-wrap">
+  <div class="marquee-inner" id="marquee1">
+    <span>☕ BUZZZ — KNOW YOUR BLOODSTREAM</span>
+    <span>⚡ CAFFEINE INTELLIGENCE ENGINE</span>
+    <span>🧠 YOUR BLOODSTREAM IS CURRENTLY LOADING</span>
+    <span>☕ THIS ISN'T COFFEE. IT'S STRATEGY.</span>
+    <span>💀 VIETNAMESE COFFEE? YOU CHOSE VIOLENCE.</span>
+    <span>🔬 PEER-REVIEWED CHAOS ONLY</span>
+    <span>☕ BUZZZ — KNOW YOUR BLOODSTREAM</span>
+    <span>⚡ CAFFEINE INTELLIGENCE ENGINE</span>
+    <span>🧠 YOUR BLOODSTREAM IS CURRENTLY LOADING</span>
+    <span>☕ THIS ISN'T COFFEE. IT'S STRATEGY.</span>
+    <span>💀 VIETNAMESE COFFEE? YOU CHOSE VIOLENCE.</span>
+    <span>🔬 PEER-REVIEWED CHAOS ONLY</span>
+  </div>
+</div>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg-grid"></div>
+  <div class="hero-glow"></div>
+  <div class="logo-container">
+    <div class="logo-eyebrow">[ CAFFEINE INTELLIGENCE ENGINE ]</div>
+    <h1 class="logo-main glitch-text" data-text="BUZZZ">BUZZZ</h1>
+    <div class="logo-sub">Know&nbsp;&nbsp;Your&nbsp;&nbsp;Bloodstream</div>
+    <p class="hero-tagline">Your body is a pharmacokinetic event. Let's map the chaos.</p>
+  </div>
+  <div class="steam-cup">
+    <div class="steam-particles">
+      <div class="steam"></div>
+      <div class="steam"></div>
+      <div class="steam"></div>
+    </div>
+    ☕
+  </div>
+  <div class="scroll-hint">▼ &nbsp; BEGIN ANALYSIS &nbsp; ▼</div>
+</section>
+
+<!-- BODY INPUT SECTION -->
+<section id="body-section">
+  <div class="container">
+    <div class="section-label">// STEP 01</div>
+    <h2 class="section-title">YOUR<br><span style="color:var(--acid)">METABOLIC</span><br>PROFILE</h2>
+
+    <div class="glass">
+      <div class="sticker sticker-hot" style="top:16px;right:50px;">REQUIRED</div>
+      <div class="grid-2">
+        <div class="input-group">
+          <label for="gender">Gender</label>
+          <select id="gender">
+            <option value="">Select gender</option>
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div class="input-group">
+          <label for="age">Age</label>
+          <input type="number" id="age" placeholder="e.g. 26" min="1" max="120">
+        </div>
+        <div class="input-group">
+          <label for="weight">Weight (kg)</label>
+          <input type="number" id="weight" placeholder="e.g. 70" min="1">
+        </div>
+        <div class="input-group">
+          <label for="height">Height (cm)</label>
+          <input type="number" id="height" placeholder="e.g. 175" min="1">
+        </div>
+      </div>
+      <button class="btn btn-ghost jitter" id="btn-bmr">⚡ Calculate Metabolic Rate</button>
+      <div id="bmr-result" class="hidden">
+        <div class="bmr-display">
+          <div class="bmr-number" id="bmr-value">—</div>
+          <div class="bmr-label">KCAL / DAY</div>
+          <div class="bmr-tagline" id="bmr-tagline"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="accent-line" style="max-width:900px;margin:0 auto"></div>
+
+<!-- COFFEE INPUT SECTION -->
+<section id="coffee-section">
+  <div class="container">
+    <div class="section-label">// STEP 02</div>
+    <h2 class="section-title">LOG YOUR<br><span style="color:var(--acid)">CRIMES</span></h2>
+
+    <div id="coffee-entries"></div>
+
+    <button class="btn btn-ghost jitter" id="btn-add-cup" style="margin-bottom:24px">＋ &nbsp;Add Another Cup</button>
+      ＋ &nbsp;Add Another Cup
+    </button>
+
+    <div class="glass" style="margin-top:24px">
+      <div class="section-label" style="margin-bottom:16px">// HALF-LIFE TUNING</div>
+      <div class="slider-wrap">
+        <div class="slider-label-row">
+          <label>Caffeine Half-Life</label>
+          <div>
+            <span class="halflife-val" id="halflife-display">5</span>
+            <span style="color:var(--muted);font-family:'VT323',monospace;font-size:15px;letter-spacing:2px"> hrs</span>
+          </div>
+        </div>
+        <input type="range" id="halflife-slider" min="3" max="7" value="5" step="0.5"
+               id="halflife-slider" min="3" max="7" value="5" step="0.5">
+        <p class="halflife-info">Varies by age, medications, pregnancy. Default 5h is population average.</p>
+      </div>
+    </div>
+
+    <div class="submit-row">
+      <button class="btn btn-primary" id="btn-analyze">
+        🧠 &nbsp;Analyze My Bloodstream
+      </button>
+    </div>
+  </div>
+</section>
+
+<div class="accent-line" style="max-width:900px;margin:0 auto"></div>
+
+<!-- RESULTS SECTION -->
+<section id="results-section" class="hidden">
+  <div class="container-wide">
+    <div class="section-label">// ANALYSIS COMPLETE</div>
+    <h2 class="section-title" style="max-width:900px;margin-left:auto;margin-right:auto">YOUR CAFFEINE<br><span style="color:var(--acid)">INTELLIGENCE</span></h2>
+
+    <div id="loading-bar-wrap">
+      <div class="loading-bar"></div>
+    </div>
+
+    <div class="container">
+      <!-- STATS GRID -->
+      <div class="stat-grid" id="stats-grid"></div>
+
+      <!-- CHART -->
+      <div class="chart-wrap">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <div>
+            <div class="section-label" style="margin-bottom:0">// DECAY CURVE</div>
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px">24-Hour Caffeine Map</div>
+          </div>
+          <div class="tag">mg / hr</div>
+        </div>
+        <canvas id="caffeineChart" height="220"></canvas>
+      </div>
+
+      <!-- TIMELINE -->
+      <div class="glass" style="margin:16px 0">
+        <div class="section-label" style="margin-bottom:12px">// HOUR-BY-HOUR BREAKDOWN</div>
+        <div class="timeline-wrap" id="timeline"></div>
+      </div>
+
+      <!-- SLEEP INDICATOR -->
+      <div id="sleep-indicator"></div>
+
+      <!-- MILESTONES -->
+      <div class="glass" style="margin:16px 0">
+        <div class="section-label" style="margin-bottom:16px">// WHEN DO YOU CHILL?</div>
+        <div id="milestones"></div>
+      </div>
+    </div>
+
+    <!-- BUZZ SCORE + PERSONALITY -->
+    <div class="container">
+      <div class="grid-2 results-grid" style="margin:24px 0">
+        <div class="glass" style="text-align:center">
+          <div class="section-label" style="margin-bottom:12px">// BUZZ SCORE</div>
+          <div class="buzz-section">
+            <div class="buzz-score-ring">
+              <svg width="160" height="160" viewBox="0 0 160 160" style="max-width:100%">
+                <circle cx="80" cy="80" r="65" fill="none" stroke="rgba(184,255,0,0.1)" stroke-width="10"/>
+                <circle id="buzz-ring" cx="80" cy="80" r="65" fill="none" stroke="var(--acid)" stroke-width="10"
+                        stroke-linecap="round" stroke-dasharray="408.41" stroke-dashoffset="408.41"
+                        style="transition:stroke-dashoffset 1.5s cubic-bezier(0.34,1.56,0.64,1);filter:drop-shadow(0 0 8px var(--acid))"/>
+              </svg>
+              <div class="buzz-number">
+                <div class="buzz-num" id="buzz-num">0</div>
+                <div class="buzz-lbl">BUZZ SCORE</div>
+              </div>
+            </div>
+          </div>
+          <div id="buzz-desc" style="font-family:'Space Mono',monospace;font-size:12px;font-style:italic;color:var(--muted);max-width:200px;margin:0 auto"></div>
+        </div>
+
+        <div class="glass">
+          <div class="section-label" style="margin-bottom:12px">// ROAST PERSONALITY</div>
+          <div class="personality-card" id="personality-card" data-emoji="☕">
+            <div class="personality-label">You Are A</div>
+            <div class="personality-name" id="personality-name">—</div>
+            <div class="personality-desc" id="personality-desc">—</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div style="font-size:28px;margin-bottom:12px">☕</div>
+  <div><span>BUZZZ</span> — Know Your Bloodstream</div>
+  <div style="margin-top:6px">Built for the caffeinated &amp; chaotic.</div>
+
+
+</footer>
+
+<!-- DISCLAIMER FIXED ICON -->
+<div class="disclaimer-fixed" id="disclaimer-fixed">
+  <button class="disclaimer-icon-btn" onclick="toggleDisclaimer(event)" aria-label="Educational disclaimer">i</button>
+  <div class="disclaimer-tooltip" id="disclaimer-tooltip" role="tooltip">
+    <p>Buzzz is designed for educational purposes only. Our visualizations are based on publicly available data about caffeine metabolism. This tool should not be used for medical decisions. Always consult healthcare professionals for medical advice.</p>
+  </div>
+</div>
+
+<!-- MOBILE STICKY CTA -->
+<div class="mobile-sticky">
+  <button class="btn btn-primary" id="btn-mobile-log">☕ Log Cups</button>
+  <button class="btn btn-ghost" id="btn-mobile-analyze">⚡ Analyze</button>
+</div>
+
+<script>
+'use strict';
+
+/* ========= SECURITY UTILITIES ========= */
+
+// Safe text setter — never use innerHTML with user data
+function setText(el, text) {
+  if (el) el.textContent = String(text);
+}
+
+// Sanitize numbers — reject NaN, Infinity, negatives, absurdly large values
+function safeNum(val, min = 0, max = 99999) {
+  const n = parseFloat(val);
+  if (!isFinite(n) || isNaN(n)) return null;
+  if (n < min || n > max) return null;
+  return n;
+}
+
+// Safe integer ID — only allow digits, prevents prototype pollution
+function safeId(id) {
+  return String(id).replace(/[^0-9]/g, '');
+}
+
+// Debounce — prevents rapid-fire analysis spam
+function debounce(fn, delay) {
+  let t;
+  return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), delay); };
+}
+
+// Validate that a value exists in a whitelist object
+function isWhitelisted(obj, key) {
+  return Object.prototype.hasOwnProperty.call(obj, key);
+}
+
+/* ========= CURSOR ========= */
+const cursor = document.getElementById('cursor');
+const ring = document.getElementById('cursor-ring');
+let mouseX=0, mouseY=0, ringX=0, ringY=0;
+
+document.addEventListener('mousemove', e => {
+  mouseX = e.clientX; mouseY = e.clientY;
+  cursor.style.left = mouseX - 6 + 'px';
+  cursor.style.top = mouseY - 6 + 'px';
+});
+
+function animateRing() {
+  ringX += (mouseX - ringX - 18) * 0.12;
+  ringY += (mouseY - ringY - 18) * 0.12;
+  ring.style.left = ringX + 'px';
+  ring.style.top = ringY + 'px';
+  requestAnimationFrame(animateRing);
+}
+animateRing();
+
+/* ========= CAFFEINE DB ========= */
+const CAFFEINE_DB = {
+  "Drip/Brewed Coffee": { Small: 130, Regular: 195, Large: 260 },
+  "Americano": { Small: 69, Regular: 104, Large: 138 },
+  "Cold Brew": { Small: 129, Regular: 194, Large: 259 },
+  "French Press": { Small: 100, Regular: 150, Large: 200 },
+  "Decaf Coffee": { Small: 4, Regular: 5, Large: 7 },
+  "Instant Coffee": { Small: 69, Regular: 104, Large: 139 },
+  "Cappuccino / Latte": { Small: 71, Regular: 107, Large: 142 },
+  "Flat White": { Small: 130, Regular: 195, Large: 260 },
+  "Nitro Cold Brew": { Small: 143, Regular: 215, Large: 287 },
+  "Iced Coffee": { Small: 80, Regular: 120, Large: 160 },
+  "Vietnamese Coffee": { Small: 200, Regular: 300, Large: 400 },
+  "Espresso": { "Single Shot (1 oz)": 69 }
+};
+
+const SIZES = {
+  "Drip/Brewed Coffee": ["Small (8oz)", "Regular (12oz)", "Large (16oz)"],
+  "Americano": ["Small", "Regular", "Large"],
+  "Cold Brew": ["Small", "Regular", "Large"],
+  "French Press": ["Small", "Regular", "Large"],
+  "Decaf Coffee": ["Small", "Regular", "Large"],
+  "Instant Coffee": ["Small", "Regular", "Large"],
+  "Cappuccino / Latte": ["Small", "Regular", "Large"],
+  "Flat White": ["Small", "Regular", "Large"],
+  "Nitro Cold Brew": ["Small", "Regular", "Large"],
+  "Iced Coffee": ["Small", "Regular", "Large"],
+  "Vietnamese Coffee": ["Small", "Regular", "Large"],
+  "Espresso": ["Single Shot (1 oz)"]
+};
+
+const SIZE_KEY_MAP = {
+  "Small (8oz)": "Small", "Regular (12oz)": "Regular", "Large (16oz)": "Large",
+  "Small": "Small", "Regular": "Regular", "Large": "Large",
+  "Single Shot (1 oz)": "Single Shot (1 oz)"
+};
+
+let entryCount = 0;
+let caffeineChart = null;
+
+/* ========= ADD COFFEE ENTRY — DOM-safe ========= */
+function addCoffeeEntry() {
+  if (document.querySelectorAll('.coffee-entry').length >= MAX_ENTRIES) {
+    alert(`Maximum ${MAX_ENTRIES} cups supported. That's already too many.`);
+    return;
+  }
+  entryCount++;
+  const id = entryCount; // always an integer from our own counter — safe
+  const now = new Date();
+  const hh = String(now.getHours()).padStart(2,'0');
+  const mm = String(now.getMinutes()).padStart(2,'0');
+
+  const entry = document.createElement('div');
+  entry.className = 'coffee-entry';
+  entry.id = `entry-${id}`;
+
+  const label = document.createElement('div');
+  label.className = 'entry-number';
+  label.textContent = `// CUP ${id}`;
+  entry.appendChild(label);
+
+  const delBtn = document.createElement('button');
+  delBtn.className = 'delete-btn';
+  delBtn.textContent = '✕';
+  delBtn.addEventListener('click', () => removeEntry(id));
+  entry.appendChild(delBtn);
+
+  const grid = document.createElement('div');
+  grid.className = 'grid-3';
+
+  // Coffee type select
+  const typeGroup = document.createElement('div');
+  typeGroup.className = 'input-group';
+  const typeLabel = document.createElement('label');
+  typeLabel.textContent = 'Coffee Type';
+  const typeSelect = document.createElement('select');
+  typeSelect.id = `type-${id}`;
+  Object.keys(CAFFEINE_DB).forEach(name => {
+    const opt = document.createElement('option');
+    opt.value = name;
+    opt.textContent = name;
+    typeSelect.appendChild(opt);
+  });
+  typeSelect.addEventListener('change', () => updateSizes(id));
+  typeGroup.appendChild(typeLabel);
+  typeGroup.appendChild(typeSelect);
+
+  // Size select
+  const sizeGroup = document.createElement('div');
+  sizeGroup.className = 'input-group';
+  const sizeLabel = document.createElement('label');
+  sizeLabel.textContent = 'Size';
+  const sizeSelect = document.createElement('select');
+  sizeSelect.id = `size-${id}`;
+  getSizeOptions('Drip/Brewed Coffee').forEach(({ val, text }) => {
+    const opt = document.createElement('option');
+    opt.value = val;
+    opt.textContent = text;
+    sizeSelect.appendChild(opt);
+  });
+  sizeSelect.addEventListener('change', () => showDose(id));
+  sizeGroup.appendChild(sizeLabel);
+  sizeGroup.appendChild(sizeSelect);
+
+  // Time input
+  const timeGroup = document.createElement('div');
+  timeGroup.className = 'input-group';
+  const timeLabel = document.createElement('label');
+  timeLabel.textContent = 'Time Consumed';
+  const timeInput = document.createElement('input');
+  timeInput.type = 'time';
+  timeInput.id = `time-${id}`;
+  timeInput.value = `${hh}:${mm}`;
+  timeGroup.appendChild(timeLabel);
+  timeGroup.appendChild(timeInput);
+
+  grid.appendChild(typeGroup);
+  grid.appendChild(sizeGroup);
+  grid.appendChild(timeGroup);
+  entry.appendChild(grid);
+
+  const doseEl = document.createElement('div');
+  doseEl.id = `dose-${id}`;
+  entry.appendChild(doseEl);
+
+  document.getElementById('coffee-entries').appendChild(entry);
+  showDose(id);
+}
+
+function getSizeOptions(type) {
+  // Returns array of {val, text} — never raw HTML
+  return (SIZES[type] || []).map(s => ({ val: s, text: s }));
+}
+
+function updateSizes(id) {
+  const sid = safeId(id);
+  const typeEl = document.getElementById(`type-${sid}`);
+  const sizeEl = document.getElementById(`size-${sid}`);
+  if (!typeEl || !sizeEl) return;
+  const type = typeEl.value;
+  // Whitelist check — only accept known coffee types
+  if (!isWhitelisted(CAFFEINE_DB, type)) return;
+  sizeEl.innerHTML = ''; // safe — no user data, cleared before rebuild
+  getSizeOptions(type).forEach(({ val, text }) => {
+    const opt = document.createElement('option');
+    opt.value = val;
+    opt.textContent = text;
+    sizeEl.appendChild(opt);
+  });
+  showDose(sid);
+}
+
+function showDose(id) {
+  const sid = safeId(id);
+  const typeEl = document.getElementById(`type-${sid}`);
+  const sizeEl = document.getElementById(`size-${sid}`);
+  const el = document.getElementById(`dose-${sid}`);
+  if (!typeEl || !sizeEl || !el) return;
+
+  const type = typeEl.value;
+  const sizeLabel = sizeEl.value;
+  // Whitelist both type and size key
+  if (!isWhitelisted(CAFFEINE_DB, type)) return;
+  const sizeKey = SIZE_KEY_MAP[sizeLabel] || sizeLabel;
+  if (!isWhitelisted(CAFFEINE_DB[type], sizeKey)) return;
+
+  const mg = CAFFEINE_DB[type][sizeKey] || 0;
+  const isVietnamese = type === 'Vietnamese Coffee';
+
+  el.textContent = ''; // clear safely
+  const badge = document.createElement('div');
+  badge.className = 'dose-badge';
+  badge.textContent = `⚡ ${mg} mg caffeine`;
+  if (isVietnamese) {
+    const tag = document.createElement('span');
+    tag.style.color = 'var(--hot)';
+    tag.textContent = ' — you chose violence';
+    badge.appendChild(tag);
+  }
+  el.appendChild(badge);
+}
+
+function removeEntry(id) {
+  const el = document.getElementById(`entry-${id}`);
+  if (el) el.remove();
+}
+
+/* ========= BMR ========= */
+function calculateBMR() {
+  const gender = document.getElementById('gender').value;
+  const age    = safeNum(document.getElementById('age').value, 1, 120);
+  const weight = safeNum(document.getElementById('weight').value, 1, 500);
+  const height = safeNum(document.getElementById('height').value, 1, 300);
+
+  if (!gender || !['male','female','other'].includes(gender)) {
+    alert('Please select a valid gender.'); return;
+  }
+  if (age === null)    { alert('Please enter a valid age (1–120).');        return; }
+  if (weight === null) { alert('Please enter a valid weight (1–500 kg).');  return; }
+  if (height === null) { alert('Please enter a valid height (1–300 cm).');  return; }
+
+  let bmr;
+  if (gender === 'female') {
+    bmr = (10 * weight) + (6.25 * height) - (5 * age) - 161;
+  } else {
+    bmr = (10 * weight) + (6.25 * height) - (5 * age) + 5;
+  }
+  bmr = Math.round(bmr);
+  if (bmr < 0) { alert('BMR calculation returned an invalid result. Check your inputs.'); return; }
+
+  const taglines = [
+    "Your metabolic furnace is burning bright.",
+    "That's a lot of energy to sustain your coffee habits.",
+    "Your body just wants to vibe and process caffeine.",
+    "Raw metabolic output. The baseline chaos.",
+    "This is you, at rest, already winning."
+  ];
+
+  const bmrValueEl = document.getElementById('bmr-value');
+  const bmrTaglineEl = document.getElementById('bmr-tagline');
+  const bmrResult = document.getElementById('bmr-result');
+
+  if (bmrValueEl) bmrValueEl.textContent = bmr.toLocaleString();
+  if (bmrTaglineEl) bmrTaglineEl.textContent =
+    `Your metabolic furnace burns at ${bmr.toLocaleString()} kcal/day. ${taglines[Math.floor(Math.random() * taglines.length)]}`;
+  if (bmrResult) bmrResult.classList.remove('hidden');
+}
+
+/* ========= PHARMACOKINETICS ENGINE ========= */
+function getDoses() {
+  const doses = [];
+  const entries = document.querySelectorAll('.coffee-entry');
+  entries.forEach(entry => {
+    const rawId = entry.id.replace('entry-', '');
+    const sid = safeId(rawId);
+    const typeEl = document.getElementById(`type-${sid}`);
+    const sizeEl = document.getElementById(`size-${sid}`);
+    const timeEl = document.getElementById(`time-${sid}`);
+    if (!typeEl || !sizeEl || !timeEl) return;
+
+    const type = typeEl.value;
+    const sizeLabel = sizeEl.value;
+    const time = timeEl.value;
+
+    // Strict whitelist — only known DB keys accepted
+    if (!isWhitelisted(CAFFEINE_DB, type)) return;
+    const sizeKey = SIZE_KEY_MAP[sizeLabel] || sizeLabel;
+    if (!isWhitelisted(CAFFEINE_DB[type], sizeKey)) return;
+
+    // Validate time format HH:MM
+    if (!/^\d{2}:\d{2}$/.test(time)) return;
+    const [hh, mm] = time.split(':').map(Number);
+    if (hh < 0 || hh > 23 || mm < 0 || mm > 59) return;
+
+    const mg = CAFFEINE_DB[type][sizeKey] || 0;
+    doses.push({ mg, timeHour: hh + mm / 60, type, sizeLabel });
+  });
+  return doses;
+}
+
+function calcCaffeineAtHour(doses, hour, halfLife) {
+  return doses.reduce((sum, d) => {
+    const elapsed = hour - d.timeHour;
+    if (elapsed < 0) return sum;
+    return sum + d.mg * Math.pow(0.5, elapsed / halfLife);
+  }, 0);
+}
+
+/* ========= FIND TIME TO THRESHOLD ========= */
+function findTimeToThreshold(doses, threshold, halfLife) {
+  for (let h = 0; h <= 24; h += 0.1) {
+    if (calcCaffeineAtHour(doses, h, halfLife) <= threshold) {
+      return h;
+    }
+  }
+  return null;
+}
+
+/* ========= FORMAT HOUR ========= */
+function formatHour(h) {
+  if (h === null || h === undefined) return 'N/A';
+  const hrs = Math.floor(h);
+  const mins = Math.round((h - hrs) * 60);
+  const ampm = hrs >= 12 ? 'PM' : 'AM';
+  const h12 = hrs % 12 === 0 ? 12 : hrs % 12;
+  return `${h12}:${String(mins).padStart(2,'0')} ${ampm}`;
+}
+
+/* ========= PERSONALITY ========= */
+function getPersonality(doses, peakMg) {
+  const types = doses.map(d => d.type);
+  const hasViet = types.includes('Vietnamese Coffee');
+  const hasDecaf = types.every(d => d.type === 'Decaf Coffee');
+  const hasEspresso = types.includes('Espresso');
+
+  if (hasDecaf) return {
+    name: 'PRETENDING TO PARTICIPATE',
+    desc: '"I love the ritual," they say, sipping hot disappointment.',
+    emoji: '😐', color: 'var(--muted)'
+  };
+  if (hasViet) return {
+    name: 'SLEEP IS A MYTH',
+    desc: 'You looked at the concept of moderation and laughed.',
+    emoji: '💀', color: 'var(--hot)'
+  };
+  if (peakMg > 350) return {
+    name: 'CHAOS ARCHITECT',
+    desc: 'You don\'t have a sleep schedule. You have a vibe.',
+    emoji: '🔥', color: 'var(--orange)'
+  };
+  if (peakMg > 200) return {
+    name: 'FUNCTIONAL HUMAN',
+    desc: 'Holding it together. Barely. Impressively.',
+    emoji: '⚡', color: 'var(--acid2)'
+  };
+  return {
+    name: 'CALM STRATEGIST',
+    desc: 'Measured. Intentional. Dangerously sober.',
+    emoji: '🧊', color: 'var(--acid)'
+  };
+}
+
+/* ========= MAIN ANALYSIS ========= */
+const MAX_ENTRIES = 20; // prevent DoS via unlimited entries
+
+const runAnalysis = debounce(function _runAnalysis() {
+  const doses = getDoses();
+  if (doses.length === 0) {
+    addCoffeeEntry();
+    alert('Add at least one coffee entry!');
+    return;
+  }
+
+  // Validate half-life from slider — whitelist range
+  const rawHL = parseFloat(document.getElementById('halflife-slider').value);
+  const halfLife = (isFinite(rawHL) && rawHL >= 3 && rawHL <= 7) ? rawHL : 5;
+  const hours = Array.from({length: 241}, (_,i) => i * 0.1);
+  const levels = hours.map(h => calcCaffeineAtHour(doses, h, halfLife));
+
+  const hourLabels = Array.from({length: 25}, (_,i) => i);
+  const hourlyLevels = hourLabels.map(h => calcCaffeineAtHour(doses, h, halfLife));
+
+  const peakMg = Math.max(...levels);
+  const peakHourIdx = levels.indexOf(peakMg);
+  const peakHour = hours[peakHourIdx];
+
+  // Derive peak from the integer hourly array (used by timeline) separately
+  const hourlyPeakMg = Math.max(...hourlyLevels);
+  const hourlyPeakIdx = hourlyLevels.indexOf(hourlyPeakMg);
+
+  const totalMg = doses.reduce((s,d) => s+d.mg, 0);
+  const buzzScore = Math.min(100, Math.round((peakMg / 400) * 100));
+
+  // Show results section
+  const resultsSection = document.getElementById('results-section');
+  resultsSection.classList.remove('hidden');
+  setTimeout(() => {
+    resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 100);
+
+  // Hide loading after brief delay
+  setTimeout(() => {
+    document.getElementById('loading-bar-wrap').style.display = 'none';
+  }, 1200);
+
+  // STATS GRID — safe DOM construction, all values are computed numbers/strings from our own logic
+  const sleepMg = calcCaffeineAtHour(doses, 23, halfLife);
+  const statsGrid = document.getElementById('stats-grid');
+  statsGrid.textContent = ''; // clear
+  [
+    { val: `${Math.round(totalMg)} mg`, label: 'Total Intake' },
+    { val: `${Math.round(peakMg)} mg`, label: 'Peak Caffeine' },
+    { val: formatHour(peakHour),       label: 'Peak Time' },
+    { val: `${Math.round(sleepMg)} mg`,label: 'At 11 PM' },
+    { val: String(doses.length),       label: 'Total Cups' },
+    { val: String(buzzScore),          label: 'Buzz Score' },
+  ].forEach(({ val, label }) => {
+    const card = document.createElement('div');
+    card.className = 'stat-card';
+    const v = document.createElement('div');
+    v.className = 'stat-value';
+    v.textContent = val;
+    const l = document.createElement('div');
+    l.className = 'stat-label';
+    l.textContent = label;
+    card.appendChild(v);
+    card.appendChild(l);
+    statsGrid.appendChild(card);
+  });
+
+  // CHART
+  // Build hourly chart (25 points, 0–24h)
+  const chartHours = Array.from({length: 25}, (_, i) => i);
+  const chartLevels = chartHours.map(h => Math.round(calcCaffeineAtHour(doses, h, halfLife) * 10) / 10);
+  const chartLabels = chartHours.map(h => {
+    const hr = h % 12 || 12;
+    const ampm = h < 12 ? 'AM' : 'PM';
+    return `${hr}${ampm}`;
+  });
+
+  if (caffeineChart) caffeineChart.destroy();
+  const ctx = document.getElementById('caffeineChart').getContext('2d');
+
+  const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+  gradient.addColorStop(0, 'rgba(184,255,0,0.25)');
+  gradient.addColorStop(1, 'rgba(184,255,0,0.01)');
+
+  caffeineChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: chartLabels,
+      datasets: [{
+        label: 'Caffeine (mg)',
+        data: chartLevels,
+        borderColor: '#b8ff00',
+        backgroundColor: gradient,
+        borderWidth: 2.5,
+        pointRadius: 0,
+        pointHoverRadius: 5,
+        pointHoverBackgroundColor: '#b8ff00',
+        fill: true,
+        tension: 0.4
+      }, {
+        label: '200mg threshold',
+        data: chartHours.map(() => 200),
+        borderColor: 'rgba(255,107,0,0.4)',
+        borderWidth: 1,
+        borderDash: [6,4],
+        pointRadius: 0,
+        fill: false
+      }, {
+        label: '50mg threshold',
+        data: chartHours.map(() => 50),
+        borderColor: 'rgba(255,45,107,0.3)',
+        borderWidth: 1,
+        borderDash: [3,3],
+        pointRadius: 0,
+        fill: false
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      animation: { duration: 1200, easing: 'easeInOutQuart' },
+      plugins: {
+        legend: {
+          labels: {
+            color: '#666',
+            font: { family: "'Space Mono', monospace", size: 10 },
+            boxWidth: 20
+          }
+        },
+        tooltip: {
+          backgroundColor: 'rgba(0,0,0,0.9)',
+          borderColor: 'rgba(184,255,0,0.3)',
+          borderWidth: 1,
+          titleColor: '#b8ff00',
+          bodyColor: '#f0f0f0',
+          titleFont: { family: "'Space Mono', monospace", size: 11 },
+          bodyFont: { family: "'Space Mono', monospace", size: 11 },
+          callbacks: {
+            label: ctx => ` ${ctx.raw} mg caffeine`
+          }
+        }
+      },
+      scales: {
+        x: {
+          ticks: {
+            color: '#444',
+            font: { family: "'VT323', monospace", size: 12 },
+            maxRotation: 0,
+            maxTicksLimit: 12
+          },
+          grid: { color: 'rgba(255,255,255,0.04)' }
+        },
+        y: {
+          ticks: {
+            color: '#444',
+            font: { family: "'VT323', monospace", size: 12 }
+          },
+          grid: { color: 'rgba(255,255,255,0.04)' }
+        }
+      }
+    }
+  });
+
+  // TIMELINE — safe DOM construction
+  const timelineEl = document.getElementById('timeline');
+  timelineEl.textContent = ''; // clear
+  const maxLevel = Math.max(...hourlyLevels, 1);
+  hourlyLevels.forEach((mg, i) => {
+    const pct = Math.min(100, (mg / maxLevel) * 100);
+    const barColor = mg > 300 ? 'var(--hot)' : mg > 200 ? 'var(--orange)' : mg > 100 ? 'var(--acid2)' : 'var(--acid)';
+    const hr = i % 12 || 12;
+    const ampm = i < 12 ? 'AM' : 'PM';
+
+    const row = document.createElement('div');
+    row.className = 'timeline-row';
+
+    const hourEl = document.createElement('div');
+    hourEl.className = 'timeline-hour';
+    hourEl.textContent = `${hr}:00 ${ampm}`;
+
+    const barWrap = document.createElement('div');
+    barWrap.className = 'timeline-bar-wrap';
+    const bar = document.createElement('div');
+    bar.className = 'timeline-bar';
+    bar.style.width = `${pct}%`;
+    bar.style.background = barColor;
+    barWrap.appendChild(bar);
+
+    const valEl = document.createElement('div');
+    valEl.className = 'timeline-val';
+    valEl.style.color = barColor;
+    valEl.textContent = `${Math.round(mg)}mg${i === hourlyPeakIdx ? ' ← PEAK' : ''}`;
+
+    row.appendChild(hourEl);
+    row.appendChild(barWrap);
+    row.appendChild(valEl);
+    timelineEl.appendChild(row);
+  });
+
+  // Auto-scroll to first hour with caffeine > 0
+  const firstActiveIndex = hourlyLevels.findIndex(mg => mg > 0);
+  if (firstActiveIndex > 0) {
+    const rows = timelineEl.querySelectorAll('.timeline-row');
+    if (rows[firstActiveIndex]) {
+      setTimeout(() => { timelineEl.scrollTop = rows[firstActiveIndex].offsetTop - 8; }, 100);
+    }
+  }
+
+  // SLEEP INDICATOR — safe DOM
+  const bedtimeMg = calcCaffeineAtHour(doses, 23, halfLife);
+  const sleepEl = document.getElementById('sleep-indicator');
+  sleepEl.textContent = '';
+  const sleepDiv = document.createElement('div');
+  if (bedtimeMg > 50) {
+    sleepDiv.className = 'sleep-indicator sleep-bad';
+    sleepDiv.textContent = '💀 Sleep? That\'s adorable.';
+    const sub = document.createElement('div');
+    sub.className = 'sub';
+    sub.textContent = `You'll have ${Math.round(bedtimeMg)}mg in your system at 11 PM. Sweet dreams are fictional tonight.`;
+    sleepDiv.appendChild(sub);
+  } else {
+    sleepDiv.className = 'sleep-indicator sleep-good';
+    sleepDiv.textContent = '✓ Sleep is actually an option tonight.';
+    const sub = document.createElement('div');
+    sub.className = 'sub';
+    sub.textContent = `Only ${Math.round(bedtimeMg)}mg at 11 PM. Your body might let you rest. Might.`;
+    sleepDiv.appendChild(sub);
+  }
+  sleepEl.appendChild(sleepDiv);
+
+  // MILESTONES — safe DOM
+  const t200 = findTimeToThreshold(doses, 200, halfLife);
+  const t100 = findTimeToThreshold(doses, 100, halfLife);
+  const t50  = findTimeToThreshold(doses, 50,  halfLife);
+  const t10  = findTimeToThreshold(doses, 10,  halfLife);
+  const milestonesEl = document.getElementById('milestones');
+  milestonesEl.textContent = '';
+  [
+    { key: 'Below 200mg (reduced alertness zone)', val: t200 ? formatHour(t200) : 'Already below' },
+    { key: 'Below 100mg (calm approaching)',        val: t100 ? formatHour(t100) : 'Already below' },
+    { key: 'Below 50mg (sleep-safe territory)',     val: t50  ? formatHour(t50)  : 'Already below' },
+    { key: 'Near zero (system cleared)',            val: t10  ? formatHour(t10)  : 'Already clear' },
+  ].forEach(({ key, val }) => {
+    const row = document.createElement('div');
+    row.className = 'data-row';
+    const k = document.createElement('div');
+    k.className = 'data-key';
+    k.textContent = key;
+    const v = document.createElement('div');
+    v.className = 'data-val acid';
+    v.textContent = val;
+    row.appendChild(k);
+    row.appendChild(v);
+    milestonesEl.appendChild(row);
+  });
+
+  // BUZZ SCORE RING
+  const circumference = 2 * Math.PI * 65;
+  const offset = circumference - (buzzScore / 100) * circumference;
+  setTimeout(() => {
+    document.getElementById('buzz-ring').style.strokeDashoffset = offset;
+    const buzzEl = document.getElementById('buzz-num');
+    let count = 0;
+    const target = buzzScore;
+    const interval = setInterval(() => {
+      count = Math.min(count + 2, target);
+      buzzEl.textContent = count;
+      if (count >= target) clearInterval(interval);
+    }, 20);
+  }, 300);
+
+  // BUZZ SCORE DESC
+  let buzzDesc = '';
+  if (buzzScore >= 80) buzzDesc = '"Your bloodstream is currently 80% ambition, 20% regret."';
+  else if (buzzScore >= 60) buzzDesc = '"Peak chaos incoming. You planned this."';
+  else if (buzzScore >= 40) buzzDesc = '"Functional. Caffeinated. Theoretically fine."';
+  else if (buzzScore >= 20) buzzDesc = '"Micro-dose energy. You\'re playing it safe."';
+  else buzzDesc = '"Are you... okay? Is this enough coffee?"';
+  document.getElementById('buzz-desc').textContent = buzzDesc;
+
+  // PERSONALITY
+  const persona = getPersonality(doses, peakMg);
+  const pCard = document.getElementById('personality-card');
+  pCard.setAttribute('data-emoji', persona.emoji);
+  document.getElementById('personality-name').textContent = persona.name;
+  document.getElementById('personality-name').style.color = persona.color;
+  document.getElementById('personality-desc').textContent = persona.desc;
+
+}, 300); // 300ms debounce
+
+/* ========= DISCLAIMER ========= */
+function toggleDisclaimer(e) {
+  e.stopPropagation();
+  const tip = document.getElementById('disclaimer-tooltip');
+  if (!tip) return;
+  const isOpen = tip.classList.contains('visible');
+  tip.classList.toggle('visible', !isOpen);
+}
+
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.disclaimer-fixed')) {
+    const tip = document.getElementById('disclaimer-tooltip');
+    if (tip) tip.classList.remove('visible');
+  }
+});
+
+/* ========= INIT — wire all event listeners ========= */
+document.addEventListener('DOMContentLoaded', () => {
+  // Button bindings
+  document.getElementById('btn-bmr')?.addEventListener('click', calculateBMR);
+  document.getElementById('btn-add-cup')?.addEventListener('click', addCoffeeEntry);
+  document.getElementById('btn-analyze')?.addEventListener('click', runAnalysis);
+  document.getElementById('btn-mobile-log')?.addEventListener('click', () => {
+    document.getElementById('coffee-section')?.scrollIntoView({ behavior: 'smooth' });
+  });
+  document.getElementById('btn-mobile-analyze')?.addEventListener('click', runAnalysis);
+
+  // Halflife slider display update
+  document.getElementById('halflife-slider')?.addEventListener('input', function () {
+    const display = document.getElementById('halflife-display');
+    const val = parseFloat(this.value);
+    if (display && isFinite(val) && val >= 3 && val <= 7) {
+      display.textContent = val;
+    }
+  });
+
+  // First coffee entry
+  addCoffeeEntry();
+});
+</script>
+</body>
+</html>
